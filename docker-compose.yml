@@ -1,0 +1,155 @@
+# docker-compose.yml
+version: '3.8'
+
+services:
+  # Broker MQTT (Mosquitto)
+  mosquitto:
+    image: eclipse-mosquitto:2.0
+    container_name: mqtt-broker
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/log:/mosquitto/log
+    restart: unless-stopped
+    networks:
+      - bridge-network
+
+  # Bridge MQTT-OPCUA
+  mqtt-opcua-bridge:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mqtt-opcua-bridge
+    depends_on:
+      - mosquitto
+    ports:
+      - "4840:4840"  # Puerto OPC-UA
+    volumes:
+      - ./bridge_config.yaml:/app/bridge_config.yaml
+      - ./logs:/app/logs
+      - ./data:/app/data
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LOG_LEVEL=INFO
+    restart: unless-stopped
+    networks:
+      - bridge-network
+
+  # Cliente OPC-UA para visualización (Opcional)
+  opcua-client:
+    image: opcfoundation/ua-nodeset-webviewer:latest
+    container_name: opcua-webviewer
+    ports:
+      - "8080:8080"
+    environment:
+      - OPCUA_ENDPOINT=opc.tcp://mqtt-opcua-bridge:4840/bridge/server/
+    depends_on:
+      - mqtt-opcua-bridge
+    restart: unless-stopped
+    networks:
+      - bridge-network
+
+  # Grafana para visualización (Opcional)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-storage:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_INSTALL_PLUGINS=grafana-mqtt-datasource
+    restart: unless-stopped
+    networks:
+      - bridge-network
+
+networks:
+  bridge-network:
+    driver: bridge
+
+volumes:
+  grafana-storage:
+
+---
+# Dockerfile
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Instalar dependencias del sistema
+RUN apt-get update && apt-get install -y \
+    gcc \
+    python3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copiar requirements
+COPY requirements.txt .
+
+# Instalar dependencias Python
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copiar aplicación
+COPY config.py .
+COPY mqtt_opcua_bridge.py .
+
+# Crear directorios necesarios
+RUN mkdir -p /app/logs /app/data
+
+# Puerto OPC-UA
+EXPOSE 4840
+
+# Comando de inicio
+CMD ["python", "mqtt_opcua_bridge.py"]
+
+---
+# mosquitto/config/mosquitto.conf
+# Configuración de Mosquitto
+
+listener 1883
+protocol mqtt
+
+listener 9001
+protocol websockets
+
+allow_anonymous true
+
+persistence true
+persistence_location /mosquitto/data/
+
+log_dest file /mosquitto/log/mosquitto.log
+log_dest stdout
+log_type all
+
+# ACL si se requiere autenticación
+# password_file /mosquitto/config/passwd
+# acl_file /mosquitto/config/acl
+
+---
+# .dockerignore
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.log
+.env
+.venv
+env/
+ENV/
+.git
+.gitignore
+README.md
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store

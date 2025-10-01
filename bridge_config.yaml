@@ -1,0 +1,100 @@
+# bridge_config.yaml
+# Configuración del Bridge MQTT-OPCUA
+
+# Configuración MQTT
+mqtt:
+  broker_host: "localhost"
+  broker_port: 1883
+  client_id: "mqtt_opcua_bridge_01"
+  username: null  # Opcional: usuario MQTT
+  password: null  # Opcional: contraseña MQTT
+  keep_alive: 60
+  qos: 1
+  tls_enabled: false
+  ca_cert: null
+  client_cert: null
+  client_key: null
+
+# Configuración OPC-UA
+opcua:
+  endpoint: "opc.tcp://0.0.0.0:4840/bridge/server/"
+  server_name: "MQTT-OPCUA Bridge Server"
+  namespace: "http://mqtt-opcua-bridge.com"
+  security_policy: "NoSecurity"  # Opciones: NoSecurity, Basic256Sha256, Basic128Rsa15
+  certificate: null
+  private_key: null
+  allow_anonymous: true
+
+# Mapeo entre topics MQTT y nodos OPC-UA
+mappings:
+  # Sensor de temperatura
+  - mqtt_topic: "sensores/temperatura/sala"
+    opcua_node_id: "ns=2;s=Temperature.Room"
+    data_type: "Float"
+    direction: "mqtt_to_opcua"  # mqtt_to_opcua, opcua_to_mqtt, bidirectional
+    
+  # Sensor de humedad
+  - mqtt_topic: "sensores/humedad/sala"
+    opcua_node_id: "ns=2;s=Humidity.Room"
+    data_type: "Float"
+    direction: "mqtt_to_opcua"
+    
+  # Control de luz
+  - mqtt_topic: "actuadores/luz/sala"
+    opcua_node_id: "ns=2;s=Light.Room"
+    data_type: "Boolean"
+    direction: "bidirectional"
+    
+  # Setpoint de temperatura
+  - mqtt_topic: "control/setpoint/temperatura"
+    opcua_node_id: "ns=2;s=Setpoint.Temperature"
+    data_type: "Float"
+    direction: "opcua_to_mqtt"
+    
+  # Estado del sistema
+  - mqtt_topic: "sistema/estado"
+    opcua_node_id: "ns=2;s=System.Status"
+    data_type: "String"
+    direction: "bidirectional"
+    
+  # Datos JSON complejos
+  - mqtt_topic: "datos/json/dispositivo1"
+    opcua_node_id: "ns=2;s=Device1.Data"
+    data_type: "JSON"
+    direction: "bidirectional"
+    
+  # Timestamp
+  - mqtt_topic: "sistema/ultima_actualizacion"
+    opcua_node_id: "ns=2;s=System.LastUpdate"
+    data_type: "DateTime"
+    direction: "mqtt_to_opcua"
+    
+  # Contador de producción
+  - mqtt_topic: "produccion/contador"
+    opcua_node_id: "ns=2;s=Production.Counter"
+    data_type: "Int32"
+    direction: "opcua_to_mqtt"
+    
+  # Alarma del sistema
+  - mqtt_topic: "alarmas/activa"
+    opcua_node_id: "ns=2;s=Alarm.Active"
+    data_type: "Boolean"
+    direction: "bidirectional"
+    
+  # Valor de proceso
+  - mqtt_topic: "proceso/valor/pv1"
+    opcua_node_id: "ns=2;s=Process.PV1"
+    data_type: "Double"
+    direction: "mqtt_to_opcua"
+
+# Configuración general del bridge
+log_level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+reconnect_interval: 5  # Segundos entre intentos de reconexión
+buffer_size: 10000  # Tamaño máximo del buffer persistente SQLite
+persistence_enabled: true  # Usar buffer persistente SQLite
+persistence_file: "buffer.db"  # Archivo de base de datos SQLite
+
+# Configuración del buffer persistente
+message_ttl_minutes: 60  # Tiempo de vida de los mensajes en minutos
+cleanup_interval: 300  # Intervalo de limpieza en segundos (5 minutos)
+worker_threads: 2  # Número de threads de procesamiento
