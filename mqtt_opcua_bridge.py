@@ -27,6 +27,16 @@ class DataTransformer:
     def mqtt_to_opcua(value: Any, data_type: str) -> Any:
         """Convierte valores MQTT a tipos OPC-UA"""
         if data_type == "Boolean":
+            if isinstance(value, bool):
+                return value
+            if isinstance(value, (int, float)):
+                return value != 0
+            if isinstance(value, str):
+                normalized = value.strip().lower()
+                if normalized in {"true", "1", "yes", "on"}:
+                    return True
+                if normalized in {"false", "0", "no", "off", ""}:
+                    return False
             return bool(value)
         elif data_type == "Int32":
             return int(value)
