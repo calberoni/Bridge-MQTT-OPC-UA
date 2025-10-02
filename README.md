@@ -1,6 +1,6 @@
-# Bridge MQTT ↔ OPC-UA con Buffer Persistente SQLite
+# Bridge MQTT ↔ OPC-UA con Buffer Persistente SQLite e integración con SAP
 
-Un servicio bidireccional que actúa como puente entre protocolos MQTT y OPC-UA, con un sistema de buffer persistente en SQLite que garantiza cero pérdida de mensajes durante desconexiones o reinicios.
+Un servicio bidireccional que actúa como puente entre protocolos MQTT y OPC-UA, con un sistema de buffer persistente en SQLite que garantiza cero pérdida de mensajes durante desconexiones o reinicios. Integración con SAP
 
 ## 🚀 Características
 
