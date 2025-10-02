@@ -120,6 +120,37 @@ logging:
   console_enabled: true
   format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
+sap:
+  enabled: false
+  endpoint: "https://sap.example.com/odata/bridge"
+  timeout: 15
+  poll_interval: 20
+  auth:
+    type: "basic"
+    username: null
+    password: null
+  mappings:
+    - mapping_id: "sap_production_orders"
+      mqtt_topic: "sap/ordenes"
+      opcua_node_id: null
+      direction: "bidirectional"
+      priority: "high"
+      resource_path: "ProductionOrders"
+      outbound:
+        resource_path: "ProductionOrders"
+        transform: null
+      inbound:
+        destination: "mqtt"
+        target: "sap/ordenes"
+        data_type: "JSON"
+        transform: null
+      retry:
+        max_attempts: 5
+        backoff_seconds: 5
+      query_params:
+        $top: 10
+        status: "OPEN"
+
 # Compatibilidad con configuraciones anteriores
 log_level: "INFO"
 reconnect_interval: 5

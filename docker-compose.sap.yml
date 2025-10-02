@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  sap-mock:
+    image: python:3.11-slim
+    container_name: sap-mock
+    command: python sap_bridge/sap_mock_server.py
+    working_dir: /app
+    volumes:
+      - ./:/app
+    ports:
+      - "8081:8081"
+
+  mqtt-opcua-bridge:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mqtt-opcua-bridge-sap
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./bridge_config.yaml:/app/bridge_config.yaml
+      - ./logs:/app/logs
+      - ./data:/app/data
+    depends_on:
+      - sap-mock
+      - mosquitto
+
+  mosquitto:
+    image: eclipse-mosquitto:2.0
+    container_name: mosquitto-sap
+    ports:
+      - "1884:1883"
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/log:/mosquitto/log
+
+networks:
+  default:
+    name: bridge-sap

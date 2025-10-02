@@ -35,7 +35,7 @@ class BufferedMessage:
     """Mensaje en el buffer persistente"""
     id: Optional[int] = None
     source: str = None  # 'mqtt' o 'opcua'
-    destination: str = None  # 'mqtt' o 'opcua'
+    destination: str = None  # 'mqtt', 'opcua' o 'sap'
     topic_or_node: str = None  # MQTT topic o OPC-UA node ID
     value: Any = None
     data_type: str = None

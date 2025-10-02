@@ -1,0 +1,30 @@
+# Ejemplo de configuración con SAP habilitado
+
+sap:
+  enabled: true
+  endpoint: "http://localhost:8081/ProductionOrders"
+  timeout: 15
+  poll_interval: 10
+  auth:
+    type: "basic"
+    username: "demo"
+    password: "demo"
+  mappings:
+    - mapping_id: "sap_orders"
+      mqtt_topic: "sap/ordenes"
+      direction: "bidirectional"
+      priority: "high"
+      resource_path: "ProductionOrders"
+      outbound:
+        resource_path: "ProductionOrders"
+        transform: "sap_bridge.transformers_examples.production_order_to_sap"
+      inbound:
+        destination: "mqtt"
+        target: "sap/ordenes"
+        data_type: "JSON"
+        transform: "sap_bridge.transformers_examples.sap_to_production_order"
+      retry:
+        max_attempts: 5
+        backoff_seconds: 5
+      query_params:
+        $top: 20

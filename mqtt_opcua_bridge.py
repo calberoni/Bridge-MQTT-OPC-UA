@@ -19,6 +19,7 @@ from asyncua.common.subscription import SubHandler
 
 from config import BridgeConfig, BridgeMapping, load_config, setup_logging
 from persistent_buffer import PersistentBuffer, BufferedMessage, MessagePriority
+from sap_bridge.sap_workers import SAPBridgeManager
 
 class DataTransformer:
     """Maneja las transformaciones de datos entre MQTT y OPC-UA"""
@@ -436,9 +437,10 @@ class MQTTOPCUABridge:
             cleanup_interval=getattr(self.config, 'cleanup_interval', 300),
             logger=self.logger
         )
-        
+
         self.mqtt_client = None
         self.opcua_server = None
+        self.sap_manager = None
         self.running = False
         self.transformer = DataTransformer()
         
@@ -541,6 +543,7 @@ class MQTTOPCUABridge:
                 
                 if success:
                     self.logger.info(f"MQTT->OPCUA: {mapping.mqtt_topic} -> {mapping.opcua_node_id} = {transformed_value}")
+                    self._enqueue_sap_message('mqtt', mapping, message.value, message.metadata)
                 else:
                     raise Exception(f"Fallo al actualizar nodo OPC-UA {mapping.opcua_node_id}")
             else:
@@ -575,6 +578,7 @@ class MQTTOPCUABridge:
                 
                 if success:
                     self.logger.info(f"OPCUA->MQTT: {mapping.opcua_node_id} -> {mapping.mqtt_topic} = {transformed_value}")
+                    self._enqueue_sap_message('opcua', mapping, message.value, message.metadata)
                 else:
                     raise Exception(f"Fallo al publicar en MQTT topic {mapping.mqtt_topic}")
             else:
@@ -608,26 +612,70 @@ class MQTTOPCUABridge:
                 
             except Exception as e:
                 self.logger.error(f"Error imprimiendo estadísticas: {e}")
+
+    def _enqueue_sap_message(self, source: str, mapping: BridgeMapping, value: Any, metadata: Optional[Dict[str, Any]]):
+        if not self.sap_manager or not getattr(self.config, 'sap', None) or not self.config.sap.enabled:
+            return
+        for sap_mapping in self.config.sap.mappings:
+            if sap_mapping.direction not in ("bridge_to_sap", "bidirectional"):
+                continue
+            match = False
+            if source == 'mqtt' and sap_mapping.mqtt_topic == mapping.mqtt_topic:
+                match = True
+            if source == 'opcua' and sap_mapping.opcua_node_id == mapping.opcua_node_id:
+                match = True
+            if not match:
+                continue
+            buffered = BufferedMessage(
+                source=source,
+                destination='sap',
+                topic_or_node=sap_mapping.resource_path,
+                value=value,
+                data_type=mapping.data_type,
+                mapping_id=sap_mapping.mapping_id,
+                priority=self._priority_from_name(sap_mapping.priority),
+                metadata={
+                    'sap_mapping_id': sap_mapping.mapping_id,
+                    'bridge_topic': mapping.mqtt_topic,
+                    'bridge_node': mapping.opcua_node_id,
+                    'origin': source,
+                }
+            )
+            if metadata:
+                buffered.metadata.update(metadata)
+            self.buffer.add_message(buffered)
+
+    @staticmethod
+    def _priority_from_name(name: str) -> int:
+        try:
+            return MessagePriority[name.upper()].value
+        except KeyError:
+            return MessagePriority.NORMAL.value
     
     async def start(self):
         """Inicia el bridge"""
         self.logger.info("Iniciando Bridge MQTT-OPCUA con buffer persistente...")
         self.running = True
-        
+
         # Reiniciar mensajes en procesamiento (por si el sistema se reinició)
         self.buffer.reset_processing_messages()
-        
+
         # Iniciar cliente MQTT
         self.mqtt_client = MQTTClient(self.config, self.buffer)
         if not self.mqtt_client.connect():
             self.logger.error("No se pudo conectar al broker MQTT")
             return False
-        
+
         # Iniciar servidor OPC-UA
         self.opcua_server = OPCUAServer(self.config, self.buffer)
         await self.opcua_server.init()
         await self.opcua_server.start()
-        
+
+        # Iniciar integración SAP si está habilitada
+        if getattr(self.config, 'sap', None) and self.config.sap.enabled:
+            self.sap_manager = SAPBridgeManager(self.config.sap, self.config, self.buffer, self.logger)
+            await self.sap_manager.start()
+
         # Iniciar procesamiento de mensajes
         asyncio.create_task(self._process_messages())
         
@@ -657,7 +705,11 @@ class MQTTOPCUABridge:
         # Detener servidor OPC-UA
         if self.opcua_server:
             await self.opcua_server.stop()
-        
+
+        # Detener integración SAP
+        if self.sap_manager:
+            await self.sap_manager.stop()
+
         # Cerrar buffer persistente
         self.buffer.close()
         

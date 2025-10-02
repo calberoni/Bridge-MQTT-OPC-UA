@@ -42,6 +42,7 @@ paho-mqtt==1.6.1
 asyncua==1.0.4
 pyyaml==6.0.1
 python-dateutil==2.8.2
+requests==2.31.0
 EOL
 pip install -r requirements.txt
 

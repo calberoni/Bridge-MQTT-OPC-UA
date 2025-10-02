@@ -13,6 +13,7 @@ paho-mqtt==1.6.1
 asyncua==1.0.4
 pyyaml==6.0.1
 python-dateutil==2.8.2
+requests==2.31.0
 EOL
 
 # requirements-minimal.txt - Solo lo esencial
@@ -25,6 +26,7 @@ paho-mqtt==1.6.1
 asyncua==1.0.4
 pyyaml==6.0.1
 python-dateutil==2.8.2
+requests==2.31.0
 EOL
 
 # requirements-dev.txt - Para desarrollo
@@ -41,6 +43,7 @@ pytest-asyncio==0.21.1
 pytest-cov==4.1.0
 pytest-mock==3.12.0
 pytest-timeout==2.2.0
+requests-mock==1.11.0
 
 # Code quality
 black==23.11.0
@@ -79,6 +82,7 @@ asyncua==1.0.4
 pyyaml==6.0.1
 python-dateutil==2.8.2
 numpy==1.24.3
+requests==2.31.0
 
 # Monitoring (lightweight)
 prometheus-client==0.19.0

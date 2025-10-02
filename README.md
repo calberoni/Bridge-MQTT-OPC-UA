@@ -7,6 +7,7 @@ Un servicio bidireccional que actúa como puente entre protocolos MQTT y OPC-UA,
 ### Características Principales
 - **Comunicación Bidireccional**: Soporte completo para flujo de datos en ambas direcciones
 - **Buffer Persistente SQLite**: Garantiza cero pérdida de mensajes incluso con reinicios del sistema
+- **SAP Bridge Connector**: Sincronización segura entre MQTT/OPC-UA y endpoints SAP
 - **Mapeo Flexible**: Configuración mediante YAML para mapear topics MQTT a nodos OPC-UA
 - **Tipos de Datos Soportados**: Boolean, Int32, Float, Double, String, DateTime, JSON
 - **Reconexión Automática**: Manejo robusto de desconexiones
@@ -114,6 +115,28 @@ mappings:
 - `mqtt_to_opcua`: Datos fluyen solo de MQTT hacia OPC-UA
 - `opcua_to_mqtt`: Datos fluyen solo de OPC-UA hacia MQTT
 - `bidirectional`: Datos fluyen en ambas direcciones
+
+## 🧩 SAP Bridge Connector
+
+El conector SAP añade un flujo fiable entre el buffer persistente y servicios SAP expuestos por REST/OData.
+
+- Configura la sección `sap` en `bridge_config.yaml` con endpoint, autenticación y mappings.
+- Cada mapping soporta direcciones `bridge_to_sap`, `sap_to_bridge` o `bidirectional` e integra transformaciones personalizadas (referencias por módulo o función).
+- El procesamiento reutiliza el `PersistentBuffer`, manteniendo reintentos, prioridades y resiliencia.
+
+### Ejecución
+
+- Integrado en el bridge principal cuando `sap.enabled` es `true`.
+- Servicio dedicado opcional:
+  ```bash
+  python sap_sync.py --config bridge_config.yaml
+  ```
+- Servidor SAP simulado para pruebas:
+  ```bash
+  python sap_bridge/sap_mock_server.py
+  ```
+
+Consulta `docs/sap-integration-guide.md` y `docs/sap-mock-playbook.md` para más detalles y ejemplos.
 
 ## 🧪 Pruebas
 

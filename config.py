@@ -138,6 +138,61 @@ class LoggingConfig:
     })
 
 @dataclass
+class SAPAuthConfig:
+    """Autenticación para SAP"""
+    type: str = "basic"  # basic, oauth2
+    username: Optional[str] = None
+    password: Optional[str] = None
+    token_url: Optional[str] = None
+    client_id: Optional[str] = None
+    client_secret: Optional[str] = None
+    scope: Optional[str] = None
+
+@dataclass
+class SAPRetryConfig:
+    """Política de reintentos para SAP"""
+    max_attempts: int = 3
+    backoff_seconds: int = 5
+
+@dataclass
+class SAPInboundConfig:
+    """Configuración inbound SAP -> Bridge"""
+    destination: str = "mqtt"  # mqtt u opcua
+    target: str = ""
+    data_type: str = "JSON"
+    transform: Optional[str] = None
+
+@dataclass
+class SAPOutboundConfig:
+    """Configuración outbound Bridge -> SAP"""
+    resource_path: str = ""
+    transform: Optional[str] = None
+
+@dataclass
+class SAPMapping:
+    """Mapeo entre SAP y MQTT/OPC-UA"""
+    mapping_id: str
+    mqtt_topic: Optional[str] = None
+    opcua_node_id: Optional[str] = None
+    direction: str = "bidirectional"  # bridge_to_sap, sap_to_bridge, bidirectional
+    priority: str = "normal"
+    resource_path: str = ""
+    outbound: SAPOutboundConfig = field(default_factory=SAPOutboundConfig)
+    inbound: SAPInboundConfig = field(default_factory=SAPInboundConfig)
+    retry: SAPRetryConfig = field(default_factory=SAPRetryConfig)
+    query_params: Optional[Dict[str, Any]] = None
+
+@dataclass
+class SAPConfig:
+    """Configuración general de integración con SAP"""
+    enabled: bool = False
+    endpoint: str = ""
+    timeout: int = 15
+    poll_interval: int = 20
+    auth: SAPAuthConfig = field(default_factory=SAPAuthConfig)
+    mappings: List[SAPMapping] = field(default_factory=list)
+
+@dataclass
 class BridgeConfig:
     """Configuración general del bridge"""
     mqtt: MQTTConfig
@@ -147,6 +202,7 @@ class BridgeConfig:
     optimization: OptimizationConfig
     monitoring: MonitoringConfig
     logging: LoggingConfig
+    sap: SAPConfig = field(default_factory=SAPConfig)
     
     # Configuración general
     name: str = "MQTT-OPCUA Bridge"
@@ -217,7 +273,39 @@ def load_config(config_file: str = "bridge_config.yaml") -> BridgeConfig:
         logging_dict['level'] = config_dict['log_level']
     
     logging_config = LoggingConfig(**logging_dict)
-    
+
+    # Configuración SAP
+    sap_dict = config_dict.get('sap', {})
+    auth_config = SAPAuthConfig(**sap_dict.get('auth', {}))
+    sap_mappings = []
+    for mapping_cfg in sap_dict.get('mappings', []):
+        outbound_cfg = SAPOutboundConfig(**mapping_cfg.get('outbound', {}))
+        inbound_cfg = SAPInboundConfig(**mapping_cfg.get('inbound', {}))
+        retry_cfg = SAPRetryConfig(**mapping_cfg.get('retry', {}))
+        sap_mappings.append(SAPMapping(
+            mapping_id=mapping_cfg.get('mapping_id'),
+            mqtt_topic=mapping_cfg.get('mqtt_topic'),
+            opcua_node_id=mapping_cfg.get('opcua_node_id'),
+            direction=mapping_cfg.get('direction', 'bidirectional'),
+            priority=mapping_cfg.get('priority', 'normal'),
+            resource_path=mapping_cfg.get('resource_path', ''),
+            outbound=outbound_cfg,
+            inbound=inbound_cfg,
+            retry=retry_cfg,
+            query_params=mapping_cfg.get('query_params')
+        ))
+
+    sap_config = SAPConfig(
+        enabled=sap_dict.get('enabled', False),
+        endpoint=sap_dict.get('endpoint', ''),
+        timeout=sap_dict.get('timeout', 15),
+        poll_interval=sap_dict.get('poll_interval', 20),
+        auth=auth_config,
+        mappings=sap_mappings
+    )
+
+    _validate_sap_config(sap_config)
+
     # Crear configuración del bridge
     bridge_config = BridgeConfig(
         mqtt=mqtt_config,
@@ -227,8 +315,9 @@ def load_config(config_file: str = "bridge_config.yaml") -> BridgeConfig:
         optimization=optimization_config,
         monitoring=monitoring_config,
         logging=logging_config,
+        sap=sap_config,
         **{k: v for k, v in config_dict.items() 
-           if k not in ['mqtt', 'opcua', 'mappings', 'buffer', 'optimization', 'monitoring', 'logging']}
+           if k not in ['mqtt', 'opcua', 'mappings', 'buffer', 'optimization', 'monitoring', 'logging', 'sap']}
     )
     
     return bridge_config
@@ -263,6 +352,27 @@ def _validate_mappings(mappings: List[BridgeMapping]):
         if mapping.opcua_node_id in seen_nodes:
             logging.warning(f"Nodo OPC-UA duplicado: {mapping.opcua_node_id}")
         seen_nodes.add(mapping.opcua_node_id)
+
+
+def _validate_sap_config(sap_config: SAPConfig):
+    """Valida la configuración SAP"""
+    if not sap_config.enabled:
+        return
+    valid_directions = {'bridge_to_sap', 'sap_to_bridge', 'bidirectional'}
+    valid_destinations = {'mqtt', 'opcua'}
+    valid_priorities = {'low', 'normal', 'high', 'critical'}
+
+    for mapping in sap_config.mappings:
+        if mapping.direction not in valid_directions:
+            raise ValueError(f"Dirección SAP inválida '{mapping.direction}' en {mapping.mapping_id}")
+        if mapping.inbound.destination not in valid_destinations:
+            raise ValueError(f"Destino SAP inválido '{mapping.inbound.destination}' en {mapping.mapping_id}")
+        if mapping.priority not in valid_priorities:
+            raise ValueError(f"Prioridad SAP inválida '{mapping.priority}' en {mapping.mapping_id}")
+        if mapping.direction in ('bridge_to_sap', 'bidirectional') and not (mapping.mqtt_topic or mapping.opcua_node_id):
+            raise ValueError(f"Mapeo SAP {mapping.mapping_id} requiere mqtt_topic u opcua_node_id")
+        if mapping.direction in ('sap_to_bridge', 'bidirectional') and not mapping.inbound.target:
+            raise ValueError(f"Mapeo SAP {mapping.mapping_id} requiere inbound.target")
 
 def setup_logging(config: LoggingConfig = None):
     """Configura el sistema de logging con opciones avanzadas"""

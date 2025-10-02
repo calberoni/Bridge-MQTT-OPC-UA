@@ -1,0 +1,17 @@
+[Unit]
+Description=SAP Bridge Connector
+After=network.target
+Requires=mqtt-opcua-bridge.service
+
+[Service]
+Type=simple
+WorkingDirectory=/home/pi/Bridge-MQTT-OPC-UA
+Environment="PATH=/home/pi/Bridge-MQTT-OPC-UA/venv/bin"
+ExecStart=/home/pi/Bridge-MQTT-OPC-UA/venv/bin/python sap_sync.py --config bridge_config.yaml
+Restart=always
+RestartSec=15
+StandardOutput=append:/home/pi/Bridge-MQTT-OPC-UA/logs/sap_bridge.log
+StandardError=append:/home/pi/Bridge-MQTT-OPC-UA/logs/sap_bridge_error.log
+
+[Install]
+WantedBy=multi-user.target
