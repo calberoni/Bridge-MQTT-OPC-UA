@@ -198,7 +198,7 @@ docker-compose down
 - **MQTT Broker**: `localhost:1883`
 - **OPC-UA Server**: `opc.tcp://localhost:4840/bridge/server/`
 - **Grafana** (si está habilitado): `http://localhost:3000`
-- **OPC-UA Web Viewer** (si está habilitado): `http://localhost:8080`
+- **OPC-UA Web Viewer** (si está habilitado): `http://localhost:8080` (no está implementado aún)
 
 ## 🔄 Systemd Service
 
@@ -432,5 +432,4 @@ Para reportar problemas o solicitar nuevas características, por favor abre un i
 - [ ] Soporte para clustering
 - [ ] Transformaciones de datos personalizables con scripts Python
 - [ ] Soporte para OPC-UA histórico
-- [ ] Buffer persistente en base de datos
 - [ ] Hot-reload de configuración
