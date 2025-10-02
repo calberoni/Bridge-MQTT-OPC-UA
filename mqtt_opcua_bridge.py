@@ -16,7 +16,6 @@ import time
 import paho.mqtt.client as mqtt
 from asyncua import Server, Node, ua
 from asyncua.common.subscription import SubHandler
-import numpy as np
 
 from config import BridgeConfig, BridgeMapping, load_config, setup_logging
 from persistent_buffer import PersistentBuffer, BufferedMessage, MessagePriority

@@ -87,14 +87,45 @@ mappings:
     data_type: "Double"
     direction: "mqtt_to_opcua"
 
-# Configuración general del bridge
-log_level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
-reconnect_interval: 5  # Segundos entre intentos de reconexión
-buffer_size: 10000  # Tamaño máximo del buffer persistente SQLite
-persistence_enabled: true  # Usar buffer persistente SQLite
-persistence_file: "buffer.db"  # Archivo de base de datos SQLite
+# Configuración del buffer persistente optimizada para Raspberry Pi 2
+buffer:
+  enabled: true
+  db_path: "buffer.db"
+  max_size: 2000
+  ttl_minutes: 30
+  cleanup_interval: 120
+  worker_threads: 1
+  retry_max_attempts: 3
+  retry_backoff_seconds: 5
+  wal_enabled: true
 
-# Configuración del buffer persistente
-message_ttl_minutes: 60  # Tiempo de vida de los mensajes en minutos
-cleanup_interval: 300  # Intervalo de limpieza en segundos (5 minutos)
-worker_threads: 2  # Número de threads de procesamiento
+# Configuración de optimización (modo conservador)
+optimization:
+  enabled: true
+  profile: "resource_constrained"
+  auto_adjust: false
+  check_interval: 600
+
+# Monitoreo deshabilitado para ahorrar recursos
+monitoring:
+  enabled: false
+  export_metrics: false
+  alerts_enabled: false
+
+# Logging
+logging:
+  level: "INFO"
+  file_enabled: true
+  file_path: "logs/bridge.log"
+  console_enabled: true
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+# Compatibilidad con configuraciones anteriores
+log_level: "INFO"
+reconnect_interval: 5
+buffer_size: 2000
+persistence_enabled: true
+persistence_file: "buffer.db"
+message_ttl_minutes: 30
+cleanup_interval: 120
+worker_threads: 1

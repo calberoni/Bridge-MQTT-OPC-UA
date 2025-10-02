@@ -7,24 +7,12 @@ set -euo pipefail
 # requirements.txt - requisitos base (uso general)
 cat > requirements.txt << 'EOL'
 # Base requirements for MQTT-OPCUA Bridge
-# Instalar con: pip install -r requirements.txt
+# Pensado para entornos ligeros (ej. Raspberry Pi)
 
-# MQTT & OPC-UA core
 paho-mqtt==1.6.1
 asyncua==1.0.4
-
-# Config & parsing
 pyyaml==6.0.1
 python-dateutil==2.8.2
-
-# Utilidades runtime
-numpy==1.24.3
-rich==13.7.0
-tabulate==0.9.0
-
-# Observabilidad básica
-prometheus-client==0.19.0
-colorlog==6.7.0
 EOL
 
 # requirements-minimal.txt - Solo lo esencial

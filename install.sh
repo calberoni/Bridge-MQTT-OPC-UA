@@ -37,111 +37,18 @@ pip install --upgrade pip
 
 # requirements.txt content
 cat > requirements.txt << 'EOL'
-# Core Dependencies
-# =================
-
-# MQTT Client
+# Dependencias mínimas por defecto (apta para Raspberry Pi)
 paho-mqtt==1.6.1
-
-# OPC-UA Server/Client
 asyncua==1.0.4
-
-# Configuration
 pyyaml==6.0.1
-
-# Utilities
 python-dateutil==2.8.2
-numpy==1.24.3
-
-# Database (SQLite3 viene con Python, no requiere instalación)
-# pero agregamos herramientas adicionales para mejor manejo
-sqlalchemy==2.0.23  # Optional: Para ORM si se desea en el futuro
-
-# Monitoring & Analytics
-# ======================
-
-# Logging mejorado
-colorlog==6.7.0
-
-# Métricas y monitoreo
-prometheus-client==0.19.0  # Para exportar métricas a Prometheus
-psutil==5.9.6  # Para monitoreo de recursos del sistema
-
-# Visualización y reportes
-matplotlib==3.7.3  # Para gráficos de métricas
-tabulate==0.9.0  # Para tablas formateadas en terminal
-rich==13.7.0  # Para UI mejorada en terminal
-
-# Web Reports (opcional)
-jinja2==3.1.2  # Para generar reportes HTML
-plotly==5.18.0  # Para gráficos interactivos en HTML
-
-# Performance & Optimization
-# ==========================
-
-# Async improvements
-aiofiles==23.2.1  # Para operaciones de archivo asíncronas
-aiodns==3.1.1  # Para resolución DNS asíncrona
-
-# Threading y concurrencia
-concurrent-futures==3.1.1  # Backport para Python < 3.8
-
-# Testing & Development
-# =====================
-
-# Testing
-pytest==7.4.3
-pytest-asyncio==0.21.1
-pytest-cov==4.1.0
-pytest-mock==3.12.0
-
-# Code quality
-black==23.11.0  # Formateo de código
-flake8==6.1.0  # Linting
-mypy==1.7.1  # Type checking
-pylint==3.0.3  # Análisis estático
-
-# Development tools
-ipython==8.18.1  # Shell interactivo mejorado
-ipdb==0.13.13  # Debugger mejorado
-
-# Documentation
-# =============
-
-sphinx==7.2.6  # Generación de documentación
-sphinx-rtd-theme==2.0.0  # Tema para documentación
-myst-parser==2.0.0  # Para usar Markdown en Sphinx
-
-# Optional Dependencies
-# =====================
-
-# Para integración con sistemas externos
-redis==5.0.1  # Si se quiere usar Redis como cache
-kafka-python==2.0.2  # Para integración con Apache Kafka
-influxdb-client==1.38.0  # Para enviar métricas a InfluxDB
-
-# Seguridad
-cryptography==41.0.7  # Para TLS/SSL avanzado
-python-jose==3.3.0  # Para JWT tokens
-passlib==1.7.4  # Para manejo seguro de passwords
-
-# API REST (si se quiere agregar API al bridge)
-fastapi==0.104.1  # Framework web moderno
-uvicorn==0.24.0  # Servidor ASGI
-pydantic==2.5.2  # Validación de datos
-
-# Notificaciones
-requests==2.31.0  # Para webhooks y llamadas HTTP
-python-telegram-bot==20.6  # Para notificaciones Telegram
-slack-sdk==3.23.0  # Para notificaciones Slack
-
-# Utilidades adicionales
-python-dotenv==1.0.0  # Para manejo de variables de entorno
-schedule==1.2.0  # Para tareas programadas simples
-watchdog==3.0.0  # Para monitorear cambios en archivos
 EOL
-
 pip install -r requirements.txt
+
+echo "Dependencias mínimas instaladas."
+echo "Para monitoreo y herramientas adicionales puedes instalar manualmente:"
+echo "  pip install colorlog prometheus-client rich tabulate"
+
 
 # Crear estructura de directorios
 echo "Creando estructura de directorios..."

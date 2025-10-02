@@ -47,18 +47,18 @@ cd mqtt-opcua-bridge
 - `requirements.txt`
 - `install.sh`
 
-3. **Ejecutar el script de instalación**:
-```bash
-chmod +x install.sh
-./install.sh
-```
+3. **Instalar dependencias**:
+   - Entornos estándar: `pip install -r requirements.txt`
+   - Raspberry Pi / hardware limitado: `pip install -r requirements-minimal.txt`
 
-4. **Configurar el bridge**:
+4. **Opcional (Raspberry Pi 2 +)**: sigue la guía específica en `docs/raspberry-pi-setup.md` o ejecuta `./setup_rpi.sh` para automatizar los pasos básicos.
+
+5. **Configurar el bridge**:
 ```bash
 nano bridge_config.yaml
 ```
 
-5. **Iniciar el servicio**:
+6. **Iniciar el servicio**:
 ```bash
 ./start_bridge.sh
 ```

@@ -1,0 +1,17 @@
+[Unit]
+Description=MQTT to OPC-UA Bridge
+After=network.target mosquitto.service
+Wants=mosquitto.service
+
+[Service]
+Type=simple
+WorkingDirectory=/home/pi/Bridge-MQTT-OPC-UA
+Environment="PATH=/home/pi/Bridge-MQTT-OPC-UA/venv/bin"
+ExecStart=/home/pi/Bridge-MQTT-OPC-UA/venv/bin/python mqtt_opcua_bridge.py
+Restart=always
+RestartSec=10
+StandardOutput=append:/home/pi/Bridge-MQTT-OPC-UA/logs/bridge.log
+StandardError=append:/home/pi/Bridge-MQTT-OPC-UA/logs/bridge_error.log
+
+[Install]
+WantedBy=multi-user.target
