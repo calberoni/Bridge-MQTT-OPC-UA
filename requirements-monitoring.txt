@@ -1,0 +1,37 @@
+# Monitoring-focused requirements for MQTT-OPCUA Bridge
+# For deployments with comprehensive monitoring needs
+
+# Include base requirements
+-r requirements-minimal.txt
+
+# Metrics & Monitoring
+prometheus-client==0.19.0
+psutil==5.9.6
+py-cpuinfo==9.0.0
+
+# Visualization
+matplotlib==3.7.3
+plotly==5.18.0
+seaborn==0.13.0
+pandas==2.1.4
+
+# Reporting
+jinja2==3.1.2
+weasyprint==60.1  # For PDF reports
+xlsxwriter==3.1.9  # For Excel reports
+
+# Time series databases
+influxdb-client==1.38.0
+pymongo==4.6.0  # For MongoDB metrics storage
+
+# Alerting
+requests==2.31.0
+python-telegram-bot==20.6
+slack-sdk==3.23.0
+email-validator==2.1.0
+
+# Advanced monitoring
+opentelemetry-api==1.21.0
+opentelemetry-sdk==1.21.0
+opentelemetry-exporter-prometheus==0.42b0
+opentelemetry-instrumentation==0.42b0

@@ -701,4 +701,51 @@ def main():
     
     # Comando plot
     plot_parser = subparsers.add_parser('plot', help='Generar gráficos')
-    plot_parser.ad
+    plot_parser.add_argument('--output-dir', default='metrics', help='Directorio destino para las imágenes')
+
+    args = parser.parse_args()
+
+    if not args.command:
+        parser.print_help()
+        return
+
+    analytics = BufferAnalytics(args.db)
+
+    if args.command == 'performance':
+        result = analytics.analyze_performance(args.hours)
+        print("\n=== Rendimiento del Buffer ===")
+        print(f"Periodo analizado: {result['period_hours']} horas")
+        print(f"Mensajes totales: {result['total_messages']}")
+        print(f"Completados: {result['completed_messages']} | Fallidos: {result['failed_messages']}")
+        print(f"Tasa de éxito: {result['success_rate']:.2f}%")
+        print(f"Throughput promedio: {result['avg_throughput_per_hour']:.2f} msg/h")
+        print(f"Tiempo medio procesamiento: {result['avg_processing_time_seconds']:.2f}s")
+        print(f"Tendencia: {result['trend']}")
+
+    elif args.command == 'anomalies':
+        anomalies = analytics.detect_anomalies()
+        if not anomalies:
+            print("No se detectaron anomalías.")
+        else:
+            print("\n=== Anomalías Detectadas ===")
+            for anomaly in anomalies:
+                print(f"- [{anomaly['severity']}] {anomaly['type']}: {anomaly['message']}")
+
+    elif args.command == 'predict':
+        prediction = analytics.predict_load(args.hours)
+        print("\n=== Predicción de Carga ===")
+        print(f"Horas analizadas: {prediction['next_hours']}")
+        print(f"Mensajes pendientes actuales: {prediction['current_pending']}")
+        print(f"Total pronosticado: {prediction['total_predicted_messages']}")
+        print(f"Carga estimada total: {prediction['estimated_total_load']}")
+        print(f"Recomendación: {prediction['recommendation']}")
+        print("\nDetalle por hora:")
+        for item in prediction['predictions']:
+            print(f"  {item['time']} -> {item['predicted_messages']} msg (confianza {item['confidence']}%)")
+
+    elif args.command == 'report':
+        output = analytics.generate_html_report(args.output)
+        print(f"Reporte generado: {output}")
+
+    elif args.command == 'plot':
+        analytics.plot_metrics(args.output_dir)

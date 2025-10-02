@@ -1,0 +1,10 @@
+apiVersion: 1
+
+datasources:
+  - name: MQTT
+    type: grafana-mqtt-datasource
+    access: proxy
+    url: tcp://mosquitto:1883
+    jsonData:
+      topic: "#"
+      qos: 1

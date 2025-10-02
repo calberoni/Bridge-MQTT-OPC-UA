@@ -1,0 +1,83 @@
+# Enterprise requirements for MQTT-OPCUA Bridge
+# Full-featured deployment with all capabilities
+
+# Include all base requirements
+-r requirements.txt
+
+# High Availability & Scaling
+redis==5.0.1
+celery==5.3.4
+flower==2.0.1  # Celery monitoring
+
+# Message Queuing
+kafka-python==2.0.2
+confluent-kafka==2.3.0
+aiokafka==0.10.0
+
+# Databases
+sqlalchemy==2.0.23
+alembic==1.13.0  # Database migrations
+pymongo==4.6.0
+motor==3.3.2  # Async MongoDB
+
+# Security
+cryptography==41.0.7
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.6
+ssl-checker==2.2.0
+
+# API & Web Interface
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+websockets==12.0
+python-socketio==5.10.0
+aiohttp==3.9.1
+
+# Authentication
+python-ldap==3.4.3
+pysaml2==7.4.2
+authlib==1.2.1
+
+# Cloud Integrations
+boto3==1.33.7  # AWS
+azure-iot-device==2.12.0  # Azure IoT
+google-cloud-pubsub==2.18.4  # Google Cloud
+
+# Observability
+opentelemetry-distro==0.42b0
+opentelemetry-exporter-jaeger==1.21.0
+opentelemetry-exporter-zipkin==1.21.0
+sentry-sdk==1.38.0
+
+# Configuration Management
+python-consul==1.1.0
+python-etcd==0.4.5
+kazoo==2.9.0  # Zookeeper
+
+# Performance
+uvloop==0.19.0
+orjson==3.9.10
+msgpack==1.0.7
+cachetools==5.3.2
+
+# Analytics & BI
+pandas==2.1.4
+pyarrow==14.0.2
+plotly==5.18.0
+dash==2.14.2
+
+# Edge & Industrial Protocols
+opcua-client==0.98.13
+modbus-tk==1.1.3
+pymodbus==3.5.2
+
+# Compliance & Governance
+python-auditlog==2.4.0
+azure-identity==1.15.0
+google-auth==2.23.4
+
+# Deployment helpers
+ansible==8.6.0
+fabric==3.2.2
+packaging==23.2

@@ -11,6 +11,7 @@ from datetime import datetime
 from typing import Any, Dict, Optional
 from dataclasses import asdict
 import threading
+import time
 
 import paho.mqtt.client as mqtt
 from asyncua import Server, Node, ua
@@ -73,7 +74,7 @@ class MQTTClient:
         self.bridge_config = config
         self.buffer = buffer
         self.client = mqtt.Client(self.config.client_id)
-        self.logger = setup_logging(config.log_level)
+        self.logger = setup_logging(config.logging)
         self.connected = False
         self.subscribed_topics = set()
         
@@ -121,13 +122,13 @@ class MQTTClient:
         try:
             # Decodificar payload
             payload = msg.payload.decode('utf-8')
-            
+
             # Intentar parsear como JSON
             try:
                 value = json.loads(payload)
             except json.JSONDecodeError:
                 value = payload
-            
+
             # Encontrar el mapeo correspondiente
             for mapping in self.bridge_config.mappings:
                 if mapping.mqtt_topic == msg.topic and mapping.direction in ["mqtt_to_opcua", "bidirectional"]:
@@ -142,26 +143,14 @@ class MQTTClient:
                         priority=MessagePriority.NORMAL.value,
                         metadata={'mapping': asdict(mapping), 'qos': msg.qos}
                     )
-                    
+
                     # Agregar al buffer persistente
                     message_id = self.buffer.add_message(buffered_msg)
                     if message_id:
                         self.logger.debug(f"MQTT mensaje recibido y buffereado: {msg.topic} = {value}, ID={message_id}")
                     else:
                         self.logger.error(f"Error agregando mensaje al buffer: {msg.topic}")
-                    
-        except Exception as e:
-            self.logger.error(f"Error procesando mensaje MQTT: {e}")ua", "bidirectional"]:
-                    # Agregar a la cola para procesar en OPC-UA
-                    self.message_queue.put({
-                        'source': 'mqtt',
-                        'topic': msg.topic,
-                        'value': value,
-                        'mapping': mapping,
-                        'timestamp': datetime.now()
-                    })
-                    self.logger.debug(f"MQTT mensaje recibido: {msg.topic} = {value}")
-                    
+
         except Exception as e:
             self.logger.error(f"Error procesando mensaje MQTT: {e}")
     
@@ -180,6 +169,7 @@ class MQTTClient:
     
     def _reconnect(self):
         """Intenta reconectar al broker MQTT"""
+        delay = getattr(self.config, 'reconnect_delay', self.bridge_config.reconnect_interval)
         while not self.connected:
             try:
                 self.logger.info("Intentando reconectar al broker MQTT...")
@@ -187,7 +177,7 @@ class MQTTClient:
                 break
             except Exception as e:
                 self.logger.error(f"Error de reconexión: {e}")
-                asyncio.sleep(self.bridge_config.reconnect_interval)
+                time.sleep(max(1, delay))
     
     def connect(self):
         """Conecta al broker MQTT"""
@@ -285,7 +275,7 @@ class OPCUAServer:
         self.config = config.opcua
         self.bridge_config = config
         self.buffer = buffer
-        self.logger = setup_logging(config.log_level)
+        self.logger = setup_logging(config.logging)
         self.server = None
         self.nodes = {}
         self.subscription = None
@@ -437,7 +427,7 @@ class MQTTOPCUABridge:
     
     def __init__(self, config_file: str = "bridge_config.yaml"):
         self.config = load_config(config_file)
-        self.logger = setup_logging(self.config.log_level)
+        self.logger = setup_logging(self.config.logging)
         
         # Buffer persistente con SQLite
         self.buffer = PersistentBuffer(
